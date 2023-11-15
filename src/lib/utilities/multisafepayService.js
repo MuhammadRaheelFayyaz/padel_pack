@@ -1,5 +1,4 @@
 import MSPClient from '@multisafepay/api-wrapper';
-import MSP from '@multisafepay/api-wrapper-test';
 const API_KEY=import.meta.env.VITE_MULTISAFEPAY_API_KEY
 
 export const client = new MSP(API_KEY,);
