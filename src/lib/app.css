@@ -1,0 +1,185 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:ital,wght@0,400;0,700;1,400;1,700&display=swap');
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+*::-webkit-scrollbar {
+    @apply hidden;
+}
+
+*:focus,
+*:focus-within {
+    @apply outline-none;
+}
+
+@layer base {
+    body {
+        @apply font-sans text-base lg:text-base text-theme-dark-blue;
+    }
+
+    section {
+        @apply relative pb-12 lg:pb-24;
+    }
+
+    h1, h2, h3, h4 {
+        @apply font-bold;
+    }
+    h1 {
+        @apply text-3xl lg:text-5xl lg:leading-[72px];
+    }
+    h2 {
+        @apply text-3xl leading-[48px];
+    }
+
+    p:not(p:last-child) {
+        @apply mb-4;
+    }
+
+    header.styled {
+        @apply mb-2;
+    }
+    header.styled h5 {
+        @apply text-sm;
+    }
+    header.styled span {
+        @apply text-primary;
+    }
+}
+
+@layer utilities {
+    /* Button */
+    .button {
+        @apply flex sm:w-fit justify-center py-3 px-8 rounded-full cursor-pointer focus-within:outline-none font-bold border text-white hover:bg-white hover:text-black duration-200;
+    }
+    .button-primary {
+        @apply bg-primary text-black border-primary hover:bg-white hover:border-white hover:text-black;
+    }
+    .button-dark {
+        @apply bg-theme-dark-blue text-white border-theme-dark-blue hover:bg-white hover:border-theme-dark-blue hover:text-theme-dark-blue font-normal;
+    }
+    .button-success {
+        @apply bg-green-lemon border-green-lemon text-white hover:bg-black hover:text-white font-normal;
+    }
+    .button-white {
+        @apply bg-white text-black hover:bg-black hover:text-white;
+    }
+    .button-white-green {
+        @apply bg-white text-green-lemon rounded-md px-4;
+    }
+    .button-outline-primary {
+        @apply font-normal border-theme-dark-blue text-theme-dark-blue bg-white hover:bg-theme-dark-blue hover:text-white;
+    }
+    .button-outline-danger {
+        @apply font-normal border-red-600 text-red-600 bg-white hover:bg-red-600 hover:text-white;
+    }
+    .button-outline-success {
+        @apply font-normal border-green-lemon text-green-lemon bg-white hover:bg-green-lemon hover:text-white;
+    }
+    .button-link {
+        @apply border-none rounded text-theme-dark-blue px-0;
+    }
+    button:disabled {
+        @apply opacity-80 cursor-not-allowed;
+    }
+    .button-sm {
+        @apply py-4 px-[18px];
+    }
+
+    /* Content */
+    .content p {
+        @apply mb-4 text-base;
+    }
+    .content li {
+        @apply flex items-center py-1.5;
+    }
+    .content li svg {
+        @apply w-4 mr-2;
+    }
+
+    /* Card */
+    .card {
+        @apply bg-white rounded-md;
+        box-shadow: 0px 0px 0px 0px rgba(0, 0, 0, 0.03), 0px 3px 7px 0px rgba(0, 0, 0, 0.03), 0px 13px 13px 0px rgba(0, 0, 0, 0.03), 0px 30px 18px 0px rgba(0, 0, 0, 0.02), 0px 53px 21px 0px rgba(0, 0, 0, 0.00), 0px 83px 23px 0px rgba(0, 0, 0, 0.00);
+    }
+    .card__body {
+        @apply py-10 px-6;
+    }
+    .card__title {
+        @apply text-xl leading-7 font-bold mb-8;
+    }
+    .card__footer {
+        @apply flex justify-center py-5 border-t border-[#E9E9E9] font-bold text-base px-6;
+    }
+
+    /* Table */
+    table {
+        @apply text-sm text-theme-dark-blue w-full;
+    }
+    table th {
+        @apply text-theme-dark-blue/50 font-normal text-left pr-4 px-4 first:pl-0;
+    }
+    table tr:not(thead tr) {
+        @apply border-b-2 border-[#F9F9F9];
+    }
+    table td {
+        @apply py-2 min-w-fit whitespace-nowrap pr-4 first:pl-0 px-4;
+    }
+    table.order-history tr {
+        @apply !border-none
+    }
+    table.order-history td:first-child {
+        @apply text-theme-dark-blue/50;
+    }
+
+    /* Form */
+    label {
+        @apply mb-1 text-sm;
+    }
+    textarea {
+        @apply p-4 lg:p-8 overflow-auto;
+    }
+    .input {
+        @apply flex h-14 w-full rounded-lg bg-white/30 px-6 text-base;
+    }
+    select {
+        @apply flex h-14 w-full rounded-lg bg-[#E9E9E9] px-6 text-base appearance-none;
+    }
+    .toggle {
+        @apply relative w-14 h-8 rounded-full bg-[#D9D9D9] cursor-pointer;
+    }
+    .toggle--bg {
+        @apply absolute rounded-full inset-0 bg-[#D9D9D9] pointer-events-none;
+    }
+    .toggle input {
+        @apply absolute w-full h-full inset-0 opacity-0;
+    }
+    .toggle span {
+        @apply absolute top-1/2 -translate-y-1/2 left-1.5 flex h-6 w-6 bg-white rounded-full peer-checked:bg-green-500;
+    }
+    .checkbox {
+        @apply flex items-center !text-theme-dark-blue;
+    }
+    .checkbox input {
+        @apply w-6 h-6 bg-[#E9E9E9] mr-3.5 translate-y-[3px] checked:bg-theme-dark-blue;
+    }
+
+    /* Form Dark */
+    .form--dark .input {
+        @apply bg-[#E9E9E9];
+    }
+    .form-dark #countryCode {
+        @apply bg-white !appearance-none !w-32;
+    }
+    .form--dark label {
+        @apply block mb-1 text-theme-dark-blue/50 ml-2;
+    }
+
+    /* Masonry flex */
+    .grid--masonry {
+        @apply columns-1 md:columns-2;
+    }
+    .grid--masonry .masonry-item {
+        @apply mt-4 first:mt-0;
+       break-inside: avoid;
+    }
+} 
