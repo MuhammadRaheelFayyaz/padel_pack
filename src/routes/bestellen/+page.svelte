@@ -7,14 +7,13 @@
     import {client} from '$lib/utilities/multisafepayService'
     import cart from '$lib/stores/cart';
 
-
     let deliveryAddress = false;
     let newsletter = false;
 
     let countryCode = 'nederland';
     let phoneNumberStore = '+31';
 
-    const form = useForm({ 
+    const form = useForm({
         // Customer
         customer_id: $customer.id ?? '',
         first_name: $customer.first_name ?? '',
@@ -51,93 +50,43 @@
         $form.post(`/api/orders`, {
             onSuccess: async (props) => {
 
-              const testOrder = {
-                amount: 1000, // Amount in cents
-                currency: 'EUR',
-                description: 'Test order',
-                payment_method: 'IDEAL', // Replace with the desired payment method
-                order_id: '123456', // Replace with a unique order ID
-                redirect_url: 'http://localhost:3000/success', // Replace with your redirect URL
-                webhook_url: 'http://localhost:3000/webhook', // Replace with your webhook URL
-              };
+              try{
+                let orderData = props.data
+                let customer = orderData
+                const {customerId}=customer
+                // const {product}=orderData.products[0]
+                const productId=$cart.items[0].product.id
+                const orderId = `${customerId}-${productId}`;
+                const amount=Math.ceil($cart.items[0].totalPrice * 100)
+                const productDescription = $cart.items[0].product.properties.info.join(', ')
 
-              client.orders.create(testOrder)
-                .then(response => {
-                  console.log('Test order created:', response);
-                  // Redirect the user to the provided redirect URL
-                  window.location.href=response.data.payment_url
+                const orderResponse = await client.orders.create({
+                  "type":"redirect",
+                  "gateway":"iDEAL",
+                  "order_id":orderId,
+                  "currency":"EUR",
+                  "amount":amount,
+                  "description":productDescription,
+                  "payment_options": {
+                    "notification_method": "POST",
+                    "notification_url": "https://c546-182-180-59-151.ngrok-free.app/api/webhooks/multisafepay",
+                    "redirect_url": "https://c546-182-180-59-151.ngrok-free.app/bestellen",
+                    "cancel_url": "https://c546-182-180-59-151.ngrok-free.app/cancel"
+                  },
+                  "recurring_model":"unscheduled",
+                  "customer":{
+                    "reference":customerId,
+                    ...customer
+                  }
                 })
-                .catch(error => {
-                  console.error('Error creating test order:', error);
-                });
 
+                window.location.href=orderResponse.data.payment_url
+                return orderResponse
+              }catch(error){
+                console.log('Error creating redirect order:', error);
+                // throw error;
+              }
 
-              // try{
-              //   let orderData = props.data
-              //   let customer = orderData
-              //   customer.productId=orderData.products[0].product.id
-              //   customer.totalPrice=orderData.products[0].totalPrice
-              //   customer.recordType=orderData.products[0].product.recordType.id
-              //   const orderId = `order-${Date.now()}`;
-              //
-              //   const amount=orderData.products[0].totalPrice*100
-              //
-              //   const selectedMonth = 9; // Default to January
-              //   const currentMonth = new Date().getMonth() + 1;
-              //
-              //   customer.productId=orderData.products[0].product.id
-              //   customer.recordType=orderData.products[0].product.recordType.id
-              //   delete customer.products
-              //
-              //   const subscriptionDetails={
-              //     type: 'redirect',
-              //     order_id: orderId,
-              //     recurring: 'true',
-              //     currency: 'EUR',
-              //     gateway: 'iDEAL',
-              //     amount: customer.totalPrice*100,
-              //     description: 'Test Order Description',
-              //     customer,
-              //   }
-              //   if (currentMonth === selectedMonth) {
-              //     subscriptionDetails.items[0].unit_price = amount/2; // 50% off for the first month
-              //   }
-              //   const withdrawalDate = new Date();
-              //   withdrawalDate.setDate(27);
-              //   withdrawalDate.setMonth(selectedMonth - 1);
-              //
-              //   subscriptionDetails.recurring_arguments = {
-              //     interval: '1 months',
-              //     start_date: withdrawalDate.toISOString().split('T')[0],
-              //   };
-              //
-              //   // const orderResponse = await client.orders.create({
-              //   //   ...subscriptionDetails
-              //   // })
-              //
-              //
-              //   const orderResponse = await client.orders.create( {
-              //     type: 'redirect',
-              //     order_id: orderId,
-              //     // recurring: 'true',
-              //     currency: 'EUR',
-              //     gateway: 'iDEAL',
-              //     amount: 10,
-              //     description: 'Test Order Description',
-              //     customer,
-              //   })
-              //
-              //   // Log the order response
-              //   console.log('Order Response:', orderResponse);
-              //   window.location.href=orderResponse.data.payment_url
-              //   // return orderResponse;
-              //
-              // }catch(error){
-              //   console.log('Error creating redirect order:', error);
-              //   // throw error;
-              // }
-
-                // handleRedirect();
 			}
         });
     }
@@ -149,7 +98,7 @@
         // If customer DONT have payment method
 		goto('https://www.multisafepay.com');
 	}
-    
+
 
     function handleCountryChange(event) {
         countryCode = event.target.value;
@@ -159,12 +108,12 @@
     function updatePhoneNumberFormat(countryCode) {
         if (countryCode === 'nederland') {
             phoneNumberStore = '+31'
-        } 
+        }
         if (countryCode === 'belgie') {
             phoneNumberStore = '+32'
-        } 
+        }
     }
-  
+
     let countryOptions = [
         { value: 'nederland', label: 'Nederland' },
         { value: 'belgie', label: 'Belgie' }
@@ -192,19 +141,19 @@
                     <svg width="8" height="11" viewBox="0 0 8 11" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M4 0C3.41569 0 2.8553 0.231785 2.44213 0.644365C2.02896 1.05695 1.79684 1.61652 1.79684 2.2V2.56667H1.49207C1.18293 2.56634 0.885583 2.68509 0.661922 2.89818C0.438261 3.11128 0.305524 3.4023 0.291343 3.71067L0.00126026 9.74233C-0.00617595 9.90453 0.0193541 10.0665 0.0763114 10.2186C0.133269 10.3707 0.220474 10.5097 0.33267 10.6272C0.444867 10.7447 0.579731 10.8383 0.729135 10.9024C0.878538 10.9665 1.03939 10.9997 1.20198 11H6.79802C6.96061 10.9997 7.12146 10.9665 7.27087 10.9024C7.42027 10.8383 7.55513 10.7447 7.66733 10.6272C7.77953 10.5097 7.86673 10.3707 7.92369 10.2186C7.98065 10.0665 8.00618 9.90453 7.99874 9.74233L7.70866 3.71067C7.69448 3.4023 7.56174 3.11128 7.33808 2.89818C7.11442 2.68509 6.81707 2.56634 6.50793 2.56667H6.20316V2.2C6.20316 1.61652 5.97104 1.05695 5.55787 0.644365C5.1447 0.231785 4.58432 0 4 0ZM2.53123 2.2C2.53123 1.81102 2.68597 1.43796 2.96142 1.16291C3.23687 0.887857 3.61046 0.733333 4 0.733333C4.38954 0.733333 4.76313 0.887857 5.03858 1.16291C5.31403 1.43796 5.46878 1.81102 5.46878 2.2V2.56667H2.53123V2.2ZM6.97427 3.74367L7.26435 9.779C7.26665 9.84206 7.25649 9.90496 7.23444 9.9641C7.21239 10.0232 7.17888 10.0775 7.13584 10.1237C7.09188 10.1687 7.03936 10.2046 6.98136 10.2292C6.92335 10.2537 6.86102 10.2665 6.79802 10.2667H1.20198C1.13898 10.2665 1.07665 10.2537 1.01865 10.2292C0.960639 10.2046 0.908121 10.1687 0.864166 10.1237C0.82112 10.0775 0.787614 10.0232 0.765563 9.9641C0.743511 9.90496 0.733346 9.84206 0.735648 9.779L1.02573 3.74367C1.0314 3.62402 1.08302 3.51115 1.16987 3.42852C1.25672 3.3459 1.37211 3.29987 1.49207 3.3H6.50793C6.62789 3.29987 6.74328 3.3459 6.83013 3.42852C6.91698 3.51115 6.9686 3.62402 6.97427 3.74367Z" fill="#F7F72C"/>
                         <path d="M7.2001 3.05566H0.800098L0.600098 10.389H7.4001L7.2001 3.05566Z" fill="#F7F72C"/>
-                    </svg>    
+                    </svg>
                 </div>
                 <div class="flex justify-center items-center border border-theme-dark-blue w-8 h-8 rounded-full bg-[#F5F5F5] z-[1]">
                     <svg width="10" height="11" viewBox="0 0 10 11" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M4.99989 5.07692C5.69734 5.07692 6.30128 4.82677 6.79474 4.33321C7.2882 3.83974 7.53835 3.23594 7.53835 2.53838C7.53835 1.84107 7.2882 1.23719 6.79466 0.743551C6.30112 0.250155 5.69726 0 4.99989 0C4.30235 0 3.69857 0.250155 3.20511 0.743631C2.71165 1.23711 2.46143 1.84099 2.46143 2.53838C2.46143 3.23594 2.71165 3.83982 3.20519 4.33329C3.69873 4.82669 4.30259 5.07692 4.99989 5.07692Z" fill="#012242"/>
                         <path d="M9.21008 8.35294C9.19638 8.12968 9.16868 7.88615 9.1279 7.62898C9.08674 7.36989 9.03373 7.12496 8.97028 6.9011C8.90475 6.66972 8.81561 6.44122 8.70542 6.22225C8.59106 5.99498 8.45673 5.79708 8.306 5.63423C8.14838 5.46386 7.9554 5.32689 7.73224 5.22697C7.50986 5.12759 7.26341 5.07724 6.99979 5.07724C6.89626 5.07724 6.79613 5.12523 6.60276 5.26745C6.48376 5.35512 6.34456 5.45652 6.18918 5.56867C6.05632 5.6643 5.87634 5.7539 5.65404 5.83502C5.43715 5.9143 5.21693 5.95451 4.99958 5.95451C4.78223 5.95451 4.56209 5.9143 4.34497 5.83502C4.12289 5.75398 3.94291 5.66439 3.81021 5.56876C3.65631 5.45766 3.51703 5.35626 3.39624 5.26736C3.20311 5.12514 3.1029 5.07715 2.99937 5.07715C2.73567 5.07715 2.4893 5.12759 2.26699 5.22706C2.04399 5.3268 1.85094 5.46377 1.69316 5.63432C1.54251 5.79725 1.4081 5.99507 1.29389 6.22225C1.18379 6.44122 1.09465 6.66963 1.02903 6.90119C0.965659 7.12505 0.912656 7.36989 0.871491 7.62898C0.830713 7.8858 0.803012 8.12942 0.789316 8.3532C0.775852 8.57243 0.769043 8.79996 0.769043 9.02977C0.769043 9.62785 0.937339 10.112 1.26921 10.4691C1.59698 10.8215 2.03068 11.0002 2.55809 11.0002H7.44154C7.96894 11.0002 8.40249 10.8216 8.73034 10.4691C9.06229 10.1123 9.23058 9.62802 9.23058 9.02968C9.2305 8.79883 9.22362 8.57112 9.21008 8.35294Z" fill="#012242"/>
-                    </svg>                        
+                    </svg>
                 </div>
                 <div class="flex justify-center items-center border border-theme-dark-blue w-8 h-8 rounded-full bg-[#F5F5F5] z-[1]">
                     <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
                         <path d="M11.9547 1.88636V1.27272C11.9547 0.569817 11.3849 0 10.682 0H1.59108C0.888176 0 0.318359 0.569817 0.318359 1.27272V1.88636C0.318359 1.94911 0.369246 1.99999 0.431995 1.99999H11.8411C11.9038 1.99999 11.9547 1.94911 11.9547 1.88636Z" fill="#012242"/>
                         <path d="M0.318359 2.84093V6.72728C0.318359 7.43019 0.888176 8.00001 1.59108 8.00001H10.682C11.3849 8.00001 11.9547 7.43019 11.9547 6.72728V2.84093C11.9547 2.77818 11.9038 2.72729 11.8411 2.72729H0.431995C0.369246 2.72729 0.318359 2.77818 0.318359 2.84093ZM3.22744 5.8182C3.22744 6.01901 3.06462 6.18183 2.86381 6.18183H2.50017C2.29935 6.18183 2.13654 6.01901 2.13654 5.8182V5.45456C2.13654 5.25374 2.29935 5.09092 2.50017 5.09092H2.86381C3.06462 5.09092 3.22744 5.25374 3.22744 5.45456V5.8182Z" fill="#012242"/>
-                    </svg>    
+                    </svg>
                 </div>
                 <div class="flex justify-center items-center border border-theme-dark-blue w-8 h-8 rounded-full bg-[#F5F5F5] z-[1]">
                     <svg width="12" height="8" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -221,7 +170,7 @@
                 <div class="space-y-8">
                     <h1 class="mb-8">Persoonlijke gegevens</h1>
 
-                    <form 
+                    <form
                         class="form--dark mt-8"
                     >
                         <div class="flex flex-col gap-4">
@@ -241,7 +190,7 @@
                     <hr class="border-1 border-black/10 mt-14 mb-14">
 
                     <div>
-                        <form 
+                        <form
                             class="form--dark mt-8"
                             on:submit|preventDefault={handleSubmit}
                         >
@@ -319,9 +268,9 @@
                                             </select>
                                             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" class="w-7 h-7 absolute right-2 top-1/2 -translate-y-1/2">
                                                 <path fill-rule="evenodd" d="M5.23 7.21a.75.75 0 011.06.02L10 11.168l3.71-3.938a.75.75 0 111.08 1.04l-4.25 4.5a.75.75 0 01-1.08 0l-4.25-4.5a.75.75 0 01.02-1.06z" clip-rule="evenodd" />
-                                            </svg>       
+                                            </svg>
                                         </div>
-                                    
+
                                         <Formfield
                                             id="phone"
                                             placeholder={phoneNumberStore}
@@ -335,10 +284,10 @@
                             </div>
 
                             <!-- Delivery Address -->
-                            <button 
+                            <button
                                 class="button button-link hover:bg-transparent items-center my-8"
                                 on:click={(event) => handleDeliveryAddress(event)}
-                            >   
+                            >
                                 {#if deliveryAddress}
                                     <svg aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" class="w-5 h-5 mr-2 rotate-90" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
                                         <path d="M8.25 4.5l7.5 7.5-7.5 7.5" stroke-linecap="round" stroke-linejoin="round"></path>
@@ -352,9 +301,9 @@
                             </button>
 
                             {#if deliveryAddress}
-                                <div 
+                                <div
                                     class="flex flex-col space-y-4 form--dark mb-8"
-                                    transition:slide="{{duration: 400}}" 
+                                    transition:slide="{{duration: 400}}"
                                 >
                                     <div class="flex flex-col space-y-4 form--dark">
                                         <Formfield
@@ -430,9 +379,9 @@
                                     </div>
                                 </div>
                             {/if}
-                
+
                             <hr class="flex border-2 border-[#E9E9E9] mb-8">
-                
+
                             <div class="flex flex-col space-y-6 form--dark">
 
                                 <Formfield
@@ -450,7 +399,7 @@
                                     label="Ik wil me aanmelden voor de nieuwsbrief van Padel Pack"
                                     on:checked={newsletter = true}
                                 />
-                
+
                                 <button class="button button-success ml-auto" class:loading={$form.processing}>
 <!--                                    Bestellen en betalen-->
                                     Ordering and paying
@@ -490,13 +439,13 @@
                                                             &euro; {item.discountPrice.toFixed(2)}
                                                         </td>
                                                     {/if}
-                                                </tr>  
+                                                </tr>
                                                 {:else}
                                                     <tr class="text-right">
                                                         <td>
                                                             &euro; {item.price.toFixed(2)}
                                                         </td>
-                                                    </tr>  
+                                                    </tr>
                                             {/if}
                                         </table>
                                 </tr>
@@ -509,7 +458,7 @@
                                         </tr>
                                     {/if}
                             </table>
-                            
+
                             {#if item.hasDiscount}
                                     <div class="flex flex-col py-3 space-y-1">
                                         <h5>Normaal tarief pakket 2 & 3</h5>
@@ -519,7 +468,7 @@
                                                     <strong>{item.product.title} 2 & 3</strong>
                                                     <p class="text-green-lemon max-w-[70%]">Bepaal zelf welke maanden je deze<br/> pakketten bezorgd krijgt!</p>
                                                 </td>
-                                                
+
                                                 <td class="text-right w-6 pl-0 font-bold">
                                                     (&euro; {item.price.toFixed(2)})
                                                 </td>
@@ -529,7 +478,7 @@
                                 {/if}
 
                                 <hr class="border border-[#E9E9E9] my-3" />
-                            
+
                                     <table class="w-full">
                                     <tr>
                                         <td class="font-bold">Verzending</td>
@@ -615,7 +564,7 @@
 <style>
     .card--simple {
         @apply border-2 border-[#D9D9D9] rounded-md;
-    }   
+    }
     .card--simple__header {
         @apply bg-[#F2F2F2] py-4 px-5 text-theme-dark-blue text-lg border-b-2 border-[#D9D9D9];
     }
